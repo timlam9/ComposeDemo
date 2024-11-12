@@ -70,6 +70,7 @@ fun OAClock(
                 dragAmount = Offset.Zero,
                 center = center,
                 radius = radius,
+                thumbSize = thumbSize,
             )
         )
     }
@@ -81,15 +82,25 @@ fun OAClock(
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = {
-                        currentThumbOffset =
-                            calculateThumbPosition(currentThumbOffset, it, center, radius)
+                        currentThumbOffset = calculateThumbPosition(
+                            currentOffset = currentThumbOffset,
+                            dragAmount = it,
+                            center = center,
+                            radius = radius,
+                            thumbSize = thumbSize,
+                        )
                     },
                     onDragEnd = {}
                 ) { change, dragAmount ->
                     change.consume()
 
-                    currentThumbOffset =
-                        calculateThumbPosition(currentThumbOffset, dragAmount, center, radius)
+                    currentThumbOffset = calculateThumbPosition(
+                        currentOffset = currentThumbOffset,
+                        dragAmount = dragAmount,
+                        center = center,
+                        radius = radius,
+                        thumbSize = thumbSize,
+                    )
                 }
             },
     ) {
@@ -176,14 +187,16 @@ private fun calculateThumbPosition(
     dragAmount: Offset,
     center: Offset,
     radius: Float,
+    thumbSize: Float,
 ): Offset {
     if (radius == 0f) return Offset.Zero
 
     val newPosition = currentOffset + dragAmount
     val angle = atan2(newPosition.y - center.y, newPosition.x - center.x)
+    val thumbRadius = (radius * 0.88f) - thumbSize / 2
 
     return Offset(
-        center.x + (radius - radius / 5) * cos(angle),
-        center.y + (radius - radius / 5) * sin(angle)
+        center.x + thumbRadius * cos(angle),
+        center.y + thumbRadius * sin(angle)
     )
 }
