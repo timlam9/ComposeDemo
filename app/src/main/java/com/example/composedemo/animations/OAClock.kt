@@ -16,11 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -137,46 +135,6 @@ fun OAClock(
                 radius = radius
             )
         }
-
-        drawCircle(
-            color = Color.Blue,
-            radius = radius * 0.8f,
-            center = center,
-            style = Stroke(width = 6f)
-        )
-
-        drawLine(
-            color = Color.Blue,
-            start = Offset(
-                x = center.x + (radius) * cos(0.getAngle()),
-                y = center.y + (radius) * sin(0.getAngle()),
-            ),
-            end = Offset(
-                x = center.x + (radius) * cos(6.getAngle()),
-                y = center.y + (radius) * sin(6.getAngle()),
-            ),
-            strokeWidth = 6f
-        )
-
-        drawLine(
-            color = Color.Blue,
-            start = Offset(
-                x = center.x + (radius) * cos(3.getAngle()),
-                y = center.y + (radius) * sin(3.getAngle()),
-            ),
-            end = Offset(
-                x = center.x + (radius) * cos(9.getAngle()),
-                y = center.y + (radius) * sin(9.getAngle()),
-            ),
-            strokeWidth = 6f
-        )
-
-        drawCircle(
-            color = Color.Blue.copy(alpha = 0.2f),
-            radius = radius * 0.8f,
-            center = center,
-            style = Stroke(width = 160f)
-        )
     }
 }
 
@@ -202,11 +160,6 @@ private fun DrawScope.drawHours(
         val x = center.x - textWidth / 2 + (radius * 0.8f) * cos(i.getAngle())
         val y = center.y - textHeight / 2 + (radius * 0.8f) * sin(i.getAngle())
 
-        drawRect(
-            color = Color.Blue.copy(alpha = 0.2f),
-            topLeft = Offset(x = x, y = y),
-            size = Size(textWidth, textHeight)
-        )
         drawText(
             textMeasurer = textMeasurer,
             text = hour.toString(),
