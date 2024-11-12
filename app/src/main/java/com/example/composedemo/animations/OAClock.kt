@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -63,7 +64,15 @@ fun OAClock(
 
     var currentThumbOffset by remember(radius) {
         mutableStateOf(
-            Offset(x = 476f, y = 104f)
+            calculateThumbPosition(
+                currentOffset = Offset(
+                    x = center.x + (radius) * cos(0.getAngle()),
+                    y = center.y + (radius) * sin(0.getAngle()),
+                ),
+                dragAmount = Offset.Zero,
+                center = center,
+                radius = radius,
+            )
         )
     }
     Canvas(
@@ -130,14 +139,40 @@ fun OAClock(
         }
 
         drawCircle(
-            color = Color.Red,
+            color = Color.Blue,
             radius = radius * 0.8f,
             center = center,
-            style = Stroke(width = 2f)
+            style = Stroke(width = 6f)
+        )
+
+        drawLine(
+            color = Color.Blue,
+            start = Offset(
+                x = center.x + (radius) * cos(0.getAngle()),
+                y = center.y + (radius) * sin(0.getAngle()),
+            ),
+            end = Offset(
+                x = center.x + (radius) * cos(6.getAngle()),
+                y = center.y + (radius) * sin(6.getAngle()),
+            ),
+            strokeWidth = 6f
+        )
+
+        drawLine(
+            color = Color.Blue,
+            start = Offset(
+                x = center.x + (radius) * cos(3.getAngle()),
+                y = center.y + (radius) * sin(3.getAngle()),
+            ),
+            end = Offset(
+                x = center.x + (radius) * cos(9.getAngle()),
+                y = center.y + (radius) * sin(9.getAngle()),
+            ),
+            strokeWidth = 6f
         )
 
         drawCircle(
-            color = Color.Blue.copy(alpha = 0.5f),
+            color = Color.Blue.copy(alpha = 0.2f),
             radius = radius * 0.8f,
             center = center,
             style = Stroke(width = 160f)
@@ -155,23 +190,30 @@ private fun DrawScope.drawHours(
 ) {
     var hour = 0
     for (i in 0..11) {
-        val xSpace = when {
-            i < 5 -> singleNumberTextLayoutResult.size.width / 2
-            else -> numberTextLayoutResult.size.width / 2
+        val textWidth = when {
+            i < 5 -> singleNumberTextLayoutResult.size.width.toFloat()
+            else -> numberTextLayoutResult.size.width.toFloat()
         }
-        val ySpace = when {
-            i < 5 -> singleNumberTextLayoutResult.size.height / 2
-            else -> numberTextLayoutResult.size.height / 2
+        val textHeight = when {
+            i < 5 -> singleNumberTextLayoutResult.size.height.toFloat()
+            else -> numberTextLayoutResult.size.height.toFloat()
         }
+
+        val x = center.x - textWidth / 2 + (radius * 0.8f) * cos(i.getAngle())
+        val y = center.y - textHeight / 2 + (radius * 0.8f) * sin(i.getAngle())
+
+        drawRect(
+            color = Color.Blue.copy(alpha = 0.2f),
+            topLeft = Offset(x = x, y = y),
+            size = Size(textWidth, textHeight)
+        )
         drawText(
             textMeasurer = textMeasurer,
             text = hour.toString(),
             style = textStyle,
-            topLeft = Offset(
-                x = center.x - xSpace - xSpace / 3 + (radius - xSpace * 2) * cos(i.getAngle()),
-                y = center.y - ySpace + ySpace / 3 + (radius - ySpace * 2) * sin(i.getAngle()),
-            )
+            topLeft = Offset(x = x, y = y)
         )
+
         hour += 2
     }
 }
