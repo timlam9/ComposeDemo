@@ -36,8 +36,6 @@ import kotlin.math.sin
 
 private const val HOUR_STEP = 30
 
-private fun Int.getAngle(): Float = ((this * HOUR_STEP) - 90) * (PI / 180).toFloat()
-
 @Composable
 fun OAClock(
     modifier: Modifier = Modifier,
@@ -74,24 +72,14 @@ fun OAClock(
             )
         )
     }
+
     Canvas(
         modifier = modifier
             .size(clockWidth)
             .clip(CircleShape)
             .background(color = backgroundColor)
             .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = {
-                        currentThumbOffset = calculateThumbPosition(
-                            currentOffset = currentThumbOffset,
-                            dragAmount = it,
-                            center = center,
-                            radius = radius,
-                            thumbSize = thumbSize,
-                        )
-                    },
-                    onDragEnd = {}
-                ) { change, dragAmount ->
+                detectDragGestures { change, dragAmount ->
                     change.consume()
 
                     currentThumbOffset = calculateThumbPosition(
@@ -104,6 +92,8 @@ fun OAClock(
                 }
             },
     ) {
+        val circlePath = Path().apply { addOval(Rect(currentThumbOffset, thumbSize)) }
+
         drawHours(
             singleNumberTextLayoutResult = singleNumberTextLayoutResult,
             numberTextLayoutResult = numberTextLayoutResult,
@@ -120,7 +110,7 @@ fun OAClock(
         )
 
         drawLine(
-            color = Color.Red,
+            color = thumbColor,
             start = center,
             end = currentThumbOffset,
             strokeWidth = 10f
@@ -131,10 +121,6 @@ fun OAClock(
             radius = thumbSize,
             center = currentThumbOffset,
         )
-
-        val circlePath = Path().apply {
-            addOval(Rect(currentThumbOffset, thumbSize))
-        }
 
         clipPath(circlePath) {
             drawHours(
@@ -200,3 +186,5 @@ private fun calculateThumbPosition(
         center.y + thumbRadius * sin(angle)
     )
 }
+
+private fun Int.getAngle(): Float = ((this * HOUR_STEP) - 90) * (PI / 180).toFloat()
