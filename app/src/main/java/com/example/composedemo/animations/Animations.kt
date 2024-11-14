@@ -508,7 +508,7 @@ private fun OffsetLayoutAnimation(modifier: Modifier = Modifier) {
         MutableInteractionSource()
     }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .padding(16.dp)
             .fillMaxSize()
             .clickable(indication = null, interactionSource = interactionSource) {
