@@ -1,4 +1,4 @@
-package com.example.composedemo.animations
+package com.example.composedemo.canvas
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
