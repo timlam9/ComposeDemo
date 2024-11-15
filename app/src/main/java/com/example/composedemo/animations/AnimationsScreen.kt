@@ -20,7 +20,7 @@ internal fun AnimationsScreen(modifier: Modifier = Modifier) {
     ) {
 
         // 1. AnimatedVectorDrawable
-        AnimatedVectorDrawable()
+//        AnimatedVectorDrawable()
 
         // 2. rememberInfiniteTransition
 //        InfiniteAnimation()
@@ -36,7 +36,8 @@ internal fun AnimationsScreen(modifier: Modifier = Modifier) {
 //        VisibilityAnimation()
 
         // 6. Modifier.animateContentSize
-//        ContentSizeAnimation()
+        ContentSizeAnimation()
+//        OffsetLayoutAnimation()
 
         // 7. animateItemPlacement
 
@@ -54,9 +55,7 @@ internal fun AnimationsScreen(modifier: Modifier = Modifier) {
         // 11. AnimationState or animate for one shot animation
 //        OneTimeAnimation()
 
-//        OffsetLayoutAnimation()
 //        CounterAnimation()
-
 //        DarkHole()
     }
 }

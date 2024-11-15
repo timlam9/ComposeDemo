@@ -59,7 +59,7 @@ internal fun DarkHole(modifier: Modifier = Modifier) {
     ) {
         Spacer(modifier = Modifier.height(50.dp))
         Text(text = "That's all folks!", style = MaterialTheme.typography.titleLarge)
-        Text(text = "Thank you for your time!", style = MaterialTheme.typography.titleLarge)
+        Text(text = "This not the end... I'll be back!", style = MaterialTheme.typography.titleLarge)
         Text(text = "Compose only!!!", style = MaterialTheme.typography.titleLarge)
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
@@ -25,18 +26,21 @@ internal fun VisibilityAnimation(modifier: Modifier = Modifier) {
     var visible by remember { mutableStateOf(true) }
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AnimatedVisibility(visible) {
-            Box(
-                modifier
-                    .drawBehind { drawRect(Color.Blue) }
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .clickable(onClick = { visible = !visible })
-            )
+            Column {
+                Box(
+                    modifier
+                        .drawBehind { drawRect(Color.Blue) }
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .clickable(onClick = { visible = !visible })
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
         }
+
 
         Button({ visible = !visible }) {
             Text(if (visible) "Hide" else "Show")

@@ -27,8 +27,7 @@ internal fun OffsetLayoutAnimation(modifier: Modifier = Modifier) {
 
     Column(
         modifier = modifier
-            .padding(16.dp)
-            .fillMaxSize()
+            .background(Color.Red)
             .clickable(indication = null, interactionSource = interactionSource) {
                 toggled = !toggled
             }

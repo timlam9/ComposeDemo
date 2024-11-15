@@ -22,7 +22,7 @@ internal fun StartSequentialAnimation(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) {
         alphaAnimation.animateTo(1f, animationSpec = tween(3000))
         yAnimation.animateTo(100f)
-        yAnimation.animateTo(100f, animationSpec = tween(6000))
+        yAnimation.animateTo(200f, animationSpec = tween(6000))
     }
 
     Box(
