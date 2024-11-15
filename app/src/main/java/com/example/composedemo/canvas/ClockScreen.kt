@@ -9,10 +9,10 @@ import androidx.compose.ui.Modifier
 @Composable
 fun ClockScreen(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         OAClock()
-        GeminiClock()
+//        GeminiClock()
     }
 }

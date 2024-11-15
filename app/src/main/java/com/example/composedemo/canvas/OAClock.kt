@@ -32,9 +32,10 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
-private const val HOUR_STEP = 30
+private const val HOUR_STEP = 15
 
 @Composable
 fun OAClock(
@@ -58,7 +59,7 @@ fun OAClock(
     val center by remember { mutableStateOf(Offset(radius, radius)) }
     val thumbSize by remember { mutableFloatStateOf(radius / 6) }
 
-    var currentThumbOffset by remember(radius) {
+    var currentThumbOffset: Offset by remember(radius) {
         mutableStateOf(
             calculateThumbPosition(
                 currentOffset = Offset(
@@ -69,7 +70,7 @@ fun OAClock(
                 center = center,
                 radius = radius,
                 thumbSize = thumbSize,
-            )
+            ) ?: Offset.Zero
         )
     }
 
@@ -82,13 +83,13 @@ fun OAClock(
                 detectDragGestures { change, dragAmount ->
                     change.consume()
 
-                    currentThumbOffset = calculateThumbPosition(
+                    calculateThumbPosition(
                         currentOffset = currentThumbOffset,
                         dragAmount = dragAmount,
                         center = center,
                         radius = radius,
                         thumbSize = thumbSize,
-                    )
+                    )?.let { currentThumbOffset = it }
                 }
             },
     ) {
@@ -144,29 +145,34 @@ private fun DrawScope.drawHours(
     radius: Float,
 ) {
     var hour = 0
-    for (i in 0..11) {
-        val textWidth = when {
-            i < 5 -> singleNumberTextLayoutResult.size.width.toFloat()
-            else -> numberTextLayoutResult.size.width.toFloat()
+    for (i in 0..22) {
+        if (i.rem(2) == 0) {
+            val textWidth = when {
+                i < 10 -> singleNumberTextLayoutResult.size.width.toFloat()
+                else -> numberTextLayoutResult.size.width.toFloat()
+            }
+            val textHeight = when {
+                i < 10 -> singleNumberTextLayoutResult.size.height.toFloat()
+                else -> numberTextLayoutResult.size.height.toFloat()
+            }
+
+            val x = center.x - textWidth / 2 + (radius * 0.8f) * cos(i.getAngle())
+            val y = center.y - textHeight / 2 + (radius * 0.8f) * sin(i.getAngle())
+
+            drawText(
+                textMeasurer = textMeasurer,
+                text = hour.toString(),
+                style = textStyle,
+                topLeft = Offset(x = x, y = y)
+            )
         }
-        val textHeight = when {
-            i < 5 -> singleNumberTextLayoutResult.size.height.toFloat()
-            else -> numberTextLayoutResult.size.height.toFloat()
-        }
 
-        val x = center.x - textWidth / 2 + (radius * 0.8f) * cos(i.getAngle())
-        val y = center.y - textHeight / 2 + (radius * 0.8f) * sin(i.getAngle())
-
-        drawText(
-            textMeasurer = textMeasurer,
-            text = hour.toString(),
-            style = textStyle,
-            topLeft = Offset(x = x, y = y)
-        )
-
-        hour += 2
+        hour += 1
     }
 }
+
+
+private var previousNumber = 0
 
 private fun calculateThumbPosition(
     currentOffset: Offset,
@@ -174,17 +180,45 @@ private fun calculateThumbPosition(
     center: Offset,
     radius: Float,
     thumbSize: Float,
-): Offset {
+): Offset? {
     if (radius == 0f) return Offset.Zero
 
     val newPosition = currentOffset + dragAmount
     val angle = atan2(newPosition.y - center.y, newPosition.x - center.x)
     val thumbRadius = (radius * 0.88f) - thumbSize / 2
 
-    return Offset(
+    var result: Offset? = null
+
+    val currentAngle = getAngleFromCircle(center, newPosition).roundToInt()
+
+    val number = (currentAngle / HOUR_STEP)
+
+    if (number != previousNumber) {
+        println("TAGARA: Number -> $number")
+        previousNumber = number
+    }
+
+    result = Offset(
         center.x + thumbRadius * cos(angle),
         center.y + thumbRadius * sin(angle)
     )
+
+    return result
 }
 
+
 private fun Int.getAngle(): Float = ((this * HOUR_STEP) - 90) * (PI / 180).toFloat()
+
+private fun getAngleFromCircle(center: Offset, point: Offset): Float {
+    val deltaX = point.x - center.x
+    val deltaY = point.y - center.y
+    val radians = atan2(deltaY, deltaX)
+
+    var degrees = radians * 180 / PI
+    degrees += 90f
+
+    if (degrees < 0) degrees += 360f
+    if (degrees == 24.0) degrees = 0.0
+
+    return degrees.toFloat()
+}
