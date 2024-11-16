@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -80,13 +79,9 @@ fun OAClock(
         )
     }
 
-    val animatedOffset = remember { Animatable(Offset(0f, 0f), Offset.VectorConverter) }
-
-    val currentAngle = remember { mutableFloatStateOf(0f) }
-
-    val offsetX = remember { mutableFloatStateOf(0f) }
-    val offsetY = remember { mutableFloatStateOf(0f) }
-    var size by remember { mutableStateOf(Size.Zero) }
+    val animatedOffset = remember(radius) {
+        Animatable(currentThumbOffset, Offset.VectorConverter)
+    }
 
     Canvas(
         modifier = modifier
@@ -98,19 +93,14 @@ fun OAClock(
                     detectDragGestures(
                         onDragEnd = {
                             launch {
-                                val angle = atan2(
-                                    currentThumbOffset.y - center.y,
-                                    currentThumbOffset.x - center.x
-                                )
-//                                val angle = getAngleFromCircle(center, currentThumbOffset)
-                                val snappedAngle =
-                                    (angle * 180 / PI).roundToInt() / 15 * 15 * PI / 180
-                                val thumbRadius = (radius * 0.88f) - thumbSize / 2
-                                val snappedOffset = Offset(
-                                    center.x + thumbRadius * cos(snappedAngle.toFloat()),
-                                    center.y + thumbRadius * sin(snappedAngle.toFloat())
-                                )
-                                animatedOffset.animateTo(snappedOffset)
+                                calculateInstantTouchThumbPosition(
+                                    touchOffset = currentThumbOffset,
+                                    center = center,
+                                    radius = radius,
+                                    thumbSize = thumbSize,
+                                ).also { position ->
+                                    launch { animatedOffset.animateTo(position) }
+                                }
                             }
                         }
                     ) { change, dragAmount ->
@@ -144,37 +134,7 @@ fun OAClock(
                         }
                     }
                 }
-            }
-//            .pointerInput(Unit) {
-//                awaitEachGesture {
-//                    val down = awaitFirstDown()
-//                    var change = awaitTouchSlopOrCancellation(down.id) { change, over ->
-//                        val original = Offset(offsetX.floatValue, offsetY.floatValue)
-//                        val summed = original + over
-//                        val newValue = Offset(
-//                            x = summed.x.coerceIn(0f, size.width - 50.dp.toPx()),
-//                            y = summed.y.coerceIn(0f, size.height - 50.dp.toPx())
-//                        )
-//                        change.consume()
-//                        offsetX.floatValue = newValue.x
-//                        offsetY.floatValue = newValue.y
-//                    }
-//                    while (change != null && change.pressed) {
-//                        change = awaitDragOrCancellation(change.id)
-//                        if (change != null && change.pressed) {
-//                            val original = Offset(offsetX.floatValue, offsetY.floatValue)
-//                            val summed = original + change.positionChange()
-//                            val newValue = Offset(
-//                                x = summed.x.coerceIn(0f, size.width - 50.dp.toPx()),
-//                                y = summed.y.coerceIn(0f, size.height - 50.dp.toPx())
-//                            )
-//                            change.consume()
-//                            offsetX.floatValue = newValue.x
-//                            offsetY.floatValue = newValue.y
-//                        }
-//                    }
-//                }
-//            },
+            },
     ) {
         val circlePath = Path().apply { addOval(Rect(animatedOffset.value, thumbSize)) }
 
