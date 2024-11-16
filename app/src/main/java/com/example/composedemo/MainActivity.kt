@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.example.composedemo.animations.AnimationsScreen
+import com.example.composedemo.canvas.ClockScreen
 import com.example.composedemo.ui.theme.ComposeDemoTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,8 +21,8 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 //                    ComposeStability(innerPadding)
 //                    ComposeEffects(modifier = Modifier.padding(innerPadding))
-                    AnimationsScreen(modifier = Modifier.padding(innerPadding))
-//                    ClockScreen()
+//                    AnimationsScreen(modifier = Modifier.padding(innerPadding))
+                    ClockScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }

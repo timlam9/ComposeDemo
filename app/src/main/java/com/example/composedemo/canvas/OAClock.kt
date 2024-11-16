@@ -1,7 +1,10 @@
 package com.example.composedemo.canvas
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -16,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -29,6 +33,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -70,9 +76,17 @@ fun OAClock(
                 center = center,
                 radius = radius,
                 thumbSize = thumbSize,
-            ) ?: Offset.Zero
+            )
         )
     }
+
+    val animatedOffset = remember { Animatable(Offset(0f, 0f), Offset.VectorConverter) }
+
+    val currentAngle = remember { mutableFloatStateOf(0f) }
+
+    val offsetX = remember { mutableFloatStateOf(0f) }
+    val offsetY = remember { mutableFloatStateOf(0f) }
+    var size by remember { mutableStateOf(Size.Zero) }
 
     Canvas(
         modifier = modifier
@@ -80,20 +94,89 @@ fun OAClock(
             .clip(CircleShape)
             .background(color = backgroundColor)
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
+                coroutineScope {
+                    detectDragGestures(
+                        onDragEnd = {
+                            launch {
+                                val angle = atan2(
+                                    currentThumbOffset.y - center.y,
+                                    currentThumbOffset.x - center.x
+                                )
+//                                val angle = getAngleFromCircle(center, currentThumbOffset)
+                                val snappedAngle =
+                                    (angle * 180 / PI).roundToInt() / 15 * 15 * PI / 180
+                                val thumbRadius = (radius * 0.88f) - thumbSize / 2
+                                val snappedOffset = Offset(
+                                    center.x + thumbRadius * cos(snappedAngle.toFloat()),
+                                    center.y + thumbRadius * sin(snappedAngle.toFloat())
+                                )
+                                animatedOffset.animateTo(snappedOffset)
+                            }
+                        }
+                    ) { change, dragAmount ->
+                        change.consume()
 
-                    calculateThumbPosition(
-                        currentOffset = currentThumbOffset,
-                        dragAmount = dragAmount,
-                        center = center,
-                        radius = radius,
-                        thumbSize = thumbSize,
-                    )?.let { currentThumbOffset = it }
+                        launch {
+                            currentThumbOffset = calculateThumbPosition(
+                                currentOffset = currentThumbOffset,
+                                dragAmount = dragAmount,
+                                center = center,
+                                radius = radius,
+                                thumbSize = thumbSize,
+                            )
+                            animatedOffset.animateTo(currentThumbOffset)
+                        }
+                    }
                 }
-            },
+            }
+            .pointerInput(Unit) {
+                coroutineScope {
+                    while (true) {
+                        awaitPointerEventScope {
+                            currentThumbOffset = calculateInstantTouchThumbPosition(
+                                touchOffset = awaitFirstDown().position,
+                                center = center,
+                                radius = radius,
+                                thumbSize = thumbSize,
+                            ).also { position ->
+                                launch { animatedOffset.animateTo(position) }
+                            }
+                        }
+                    }
+                }
+            }
+//            .pointerInput(Unit) {
+//                awaitEachGesture {
+//                    val down = awaitFirstDown()
+//                    var change = awaitTouchSlopOrCancellation(down.id) { change, over ->
+//                        val original = Offset(offsetX.floatValue, offsetY.floatValue)
+//                        val summed = original + over
+//                        val newValue = Offset(
+//                            x = summed.x.coerceIn(0f, size.width - 50.dp.toPx()),
+//                            y = summed.y.coerceIn(0f, size.height - 50.dp.toPx())
+//                        )
+//                        change.consume()
+//                        offsetX.floatValue = newValue.x
+//                        offsetY.floatValue = newValue.y
+//                    }
+//                    while (change != null && change.pressed) {
+//                        change = awaitDragOrCancellation(change.id)
+//                        if (change != null && change.pressed) {
+//                            val original = Offset(offsetX.floatValue, offsetY.floatValue)
+//                            val summed = original + change.positionChange()
+//                            val newValue = Offset(
+//                                x = summed.x.coerceIn(0f, size.width - 50.dp.toPx()),
+//                                y = summed.y.coerceIn(0f, size.height - 50.dp.toPx())
+//                            )
+//                            change.consume()
+//                            offsetX.floatValue = newValue.x
+//                            offsetY.floatValue = newValue.y
+//                        }
+//                    }
+//                }
+//            },
     ) {
-        val circlePath = Path().apply { addOval(Rect(currentThumbOffset, thumbSize)) }
+        val circlePath = Path().apply { addOval(Rect(animatedOffset.value, thumbSize)) }
 
         drawHours(
             singleNumberTextLayoutResult = singleNumberTextLayoutResult,
@@ -113,14 +196,14 @@ fun OAClock(
         drawLine(
             color = thumbColor,
             start = center,
-            end = currentThumbOffset,
+            end = animatedOffset.value,
             strokeWidth = 10f
         )
 
         drawCircle(
             color = thumbColor,
             radius = thumbSize,
-            center = currentThumbOffset,
+            center = animatedOffset.value,
         )
 
         clipPath(circlePath) {
@@ -180,30 +263,50 @@ private fun calculateThumbPosition(
     center: Offset,
     radius: Float,
     thumbSize: Float,
-): Offset? {
+): Offset {
     if (radius == 0f) return Offset.Zero
 
     val newPosition = currentOffset + dragAmount
     val angle = atan2(newPosition.y - center.y, newPosition.x - center.x)
     val thumbRadius = (radius * 0.88f) - thumbSize / 2
 
-    var result: Offset? = null
-
     val currentAngle = getAngleFromCircle(center, newPosition).roundToInt()
 
     val number = (currentAngle / HOUR_STEP)
-
     if (number != previousNumber) {
         println("TAGARA: Number -> $number")
         previousNumber = number
     }
 
-    result = Offset(
+    return Offset(
         center.x + thumbRadius * cos(angle),
         center.y + thumbRadius * sin(angle)
     )
+}
 
-    return result
+private fun calculateInstantTouchThumbPosition(
+    touchOffset: Offset,
+    center: Offset,
+    radius: Float,
+    thumbSize: Float,
+): Offset {
+    if (radius == 0f) return Offset.Zero
+
+    val thumbRadius = (radius * 0.88f) - thumbSize / 2
+
+    val angle = atan2(touchOffset.y - center.y, touchOffset.x - center.x)
+    val snappedAngle = (angle * 180 / PI).roundToInt() / 15 * 15 * PI / 180
+
+    val number = (snappedAngle.toInt() / HOUR_STEP)
+    if (number != previousNumber) {
+        println("TAGARA: Number -> $number")
+        previousNumber = number
+    }
+
+    return Offset(
+        center.x + thumbRadius * cos(snappedAngle.toFloat()),
+        center.y + thumbRadius * sin(snappedAngle.toFloat())
+    )
 }
 
 
