@@ -2,6 +2,7 @@ package com.example.composedemo.canvas
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -64,6 +65,27 @@ fun OAClock(
     val center by remember { mutableStateOf(Offset(radius, radius)) }
     val thumbSize by remember { mutableFloatStateOf(radius / 6) }
 
+
+    val progress = remember { Animatable(0f) }
+    var animatedEndAngle by remember { mutableFloatStateOf(0f) }
+    var animatedStartAngle by remember { mutableFloatStateOf(0f) }
+
+    fun calOffset(startAngle: Float, endAngle: Float, progress: Float): Offset {
+        val currentAngle = startAngle + (endAngle - startAngle) * progress
+        val objectOffset = calculateObjectOffset(center, radius * 0.8f, currentAngle)
+        println("TAGARA: $objectOffset, progress: $progress")
+
+        if (progress == 1f) {
+            animatedStartAngle = animatedEndAngle
+        }
+
+        return objectOffset
+    }
+
+    var animatedThumbOffset by remember(progress.value, animatedEndAngle, animatedStartAngle) {
+        mutableStateOf(calOffset(animatedStartAngle, animatedEndAngle, progress.value))
+    }
+
     var currentThumbOffset: Offset by remember(radius) {
         mutableStateOf(
             calculateThumbPosition(
@@ -123,16 +145,40 @@ fun OAClock(
                 coroutineScope {
                     while (true) {
                         awaitPointerEventScope {
-                            currentThumbOffset = calculateInstantTouchThumbPosition(
-                                touchOffset = awaitFirstDown().position,
+                            val endPosition = awaitFirstDown().position
+                            println("TAGARA, end position: $endPosition")
+
+                            calculateInstantTouchThumbPosition(
+                                touchOffset = endPosition,
                                 center = center,
                                 radius = radius,
                                 thumbSize = thumbSize,
                             ).also { position ->
-                                launch { animatedOffset.animateTo(position) }
+                                println("TAGARA, cal position: $position")
+
+                                launch {
+                                    val deltaX = position.x - center.x
+                                    val deltaY = position.y - center.y
+                                    val radians = atan2(deltaY, deltaX)
+
+                                    var degrees = radians * 180 / PI
+                                    val snappedAngle =
+                                        (degrees * 180 / PI).roundToInt() / 15 * 15 * PI / 180
+
+                                    animatedEndAngle = snappedAngle.toFloat()
+
+                                    progress.snapTo(0f)
+                                    println("TAGARA, animate")
+
+                                    progress.animateTo(
+                                        targetValue = 1f,
+                                        animationSpec = tween(delayMillis = 250),
+                                    )
+                                }
                             }
                         }
                     }
+
                 }
             },
     ) {
@@ -164,6 +210,12 @@ fun OAClock(
             color = thumbColor,
             radius = thumbSize,
             center = animatedOffset.value,
+        )
+
+        drawCircle(
+            color = Color.Blue,
+            radius = thumbSize,
+            center = animatedThumbOffset,
         )
 
         clipPath(circlePath) {

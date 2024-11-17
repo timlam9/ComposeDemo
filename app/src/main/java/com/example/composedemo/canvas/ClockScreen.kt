@@ -32,9 +32,8 @@ fun ClockScreen(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
 //        Gesture()
-//        OAClock()
+        OAClock()
 //        GeminiClock()
-        ArcObjectAnimation(60f, 260f)
     }
 }
 
