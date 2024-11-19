@@ -70,42 +70,60 @@ fun OAClock(
     val thumbSize by remember { mutableFloatStateOf(radius / 6) }
 
 
+
+
     val progress = remember { Animatable(0f) }
     var animatedEndAngle by remember { mutableFloatStateOf(0f) }
     var animatedStartAngle by remember { mutableFloatStateOf(0f) }
 
-    fun calOffset(startAngle: Float, endAngle: Float, progress: Float): Offset {
+    fun calculateAnimatedThumbOffset(startAngle: Float, endAngle: Float, progress: Float): Offset {
         val currentAngle = startAngle + (endAngle - startAngle) * progress
         val objectOffset = calculateObjectOffset(center, radius * PADDING, currentAngle)
 
-        if (progress == 1f) {
-            animatedStartAngle = animatedEndAngle
-        }
+        if (progress == 1f) animatedStartAngle = animatedEndAngle
 
         return objectOffset
     }
 
     val animatedThumbOffset by remember(progress.value, animatedEndAngle, animatedStartAngle) {
-        mutableStateOf(calOffset(animatedStartAngle, animatedEndAngle, progress.value))
+        mutableStateOf(
+            calculateAnimatedThumbOffset(
+                startAngle = animatedStartAngle,
+                endAngle = animatedEndAngle,
+                progress = progress.value,
+            )
+        )
     }
 
-    var currentThumbOffset: Offset by remember(radius) {
+
+
+
+
+    val initialThumbOffset by remember(radius) {
+        mutableStateOf(
+            Offset(
+                x = center.x + (radius) * cos(0.getAngleInRadians()),
+                y = center.y + (radius) * sin(0.getAngleInRadians()),
+            )
+        )
+    }
+
+    var currentThumbOffset: Offset by remember(initialThumbOffset) {
         mutableStateOf(
             calculateThumbPosition(
-                newPosition = Offset(
-                    x = center.x + (radius) * cos(0.getAngleInRadians()),
-                    y = center.y + (radius) * sin(0.getAngleInRadians()),
-                ),
+                angle = initialThumbOffset.calculateAngle(center),
                 center = center,
                 radius = radius,
                 thumbSize = thumbSize,
-            )
+            ),
         )
     }
 
     val animatedOffset = remember(radius) {
         Animatable(currentThumbOffset, Offset.VectorConverter)
     }
+
+
 
     Canvas(
         modifier = modifier
@@ -116,8 +134,8 @@ fun OAClock(
                 coroutineScope {
                     detectDragGestures(
                         onDragEnd = {
-                            calculateInstantTouchThumbPosition(
-                                touchOffset = currentThumbOffset,
+                            calculateSnappedThumbPosition(
+                                snappedAngle = currentThumbOffset.calculateSnappedAngle(center),
                                 center = center,
                                 radius = radius,
                                 thumbSize = thumbSize,
@@ -132,7 +150,7 @@ fun OAClock(
                             val newPosition = currentThumbOffset + dragAmount
 
                             currentThumbOffset = calculateThumbPosition(
-                                newPosition = newPosition,
+                                angle = newPosition.calculateAngle(center),
                                 center = center,
                                 radius = radius,
                                 thumbSize = thumbSize,
@@ -148,8 +166,8 @@ fun OAClock(
                         awaitPointerEventScope {
                             val endPosition = awaitFirstDown().position
 
-                            calculateInstantTouchThumbPosition(
-                                touchOffset = endPosition,
+                            calculateSnappedThumbPosition(
+                                snappedAngle = endPosition.calculateSnappedAngle(center),
                                 center = center,
                                 radius = radius,
                                 thumbSize = thumbSize,
@@ -269,15 +287,21 @@ private fun DrawScope.drawHours(
     }
 }
 
+
+private fun Offset.calculateAngle(center: Offset): Float {
+    return atan2(y - center.y, x - center.x)
+}
+
+private fun Offset.calculateSnappedAngle(center: Offset, step: Int = HOUR_STEP): Float {
+    return calculateAngle(center).toDegrees().roundToInt() / step * step.toRadians()
+}
+
 private fun calculateThumbPosition(
-    newPosition: Offset,
+    angle: Float,
     center: Offset,
     radius: Float,
     thumbSize: Float,
 ): Offset {
-    if (radius == 0f) return Offset.Zero
-
-    val angle = atan2(newPosition.y - center.y, newPosition.x - center.x)
     val thumbRadius = (radius * THUMB_PADDING) - thumbSize / 2
 
     return Offset(
@@ -286,23 +310,20 @@ private fun calculateThumbPosition(
     )
 }
 
-private fun calculateInstantTouchThumbPosition(
-    touchOffset: Offset,
+private fun calculateSnappedThumbPosition(
+    snappedAngle: Float,
     center: Offset,
     radius: Float,
     thumbSize: Float,
 ): Offset {
-    if (radius == 0f) return Offset.Zero
-
     val thumbRadius = (radius * THUMB_PADDING) - thumbSize / 2
-    val angle = atan2(touchOffset.y - center.y, touchOffset.x - center.x)
-    val snappedAngle = angle.toDegrees().roundToInt() / HOUR_STEP * HOUR_STEP.toRadians()
 
     return Offset(
         center.x + thumbRadius * cos(snappedAngle),
         center.y + thumbRadius * sin(snappedAngle)
     )
 }
+
 
 private fun Int.getAngleInRadians(
     step: Int = HOUR_STEP,
@@ -326,6 +347,7 @@ private fun getAngleFromCircleInDegrees(
 
     return degrees
 }
+
 
 fun Int.toDegrees(): Float = (this * (180 / PI)).toFloat()
 
