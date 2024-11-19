@@ -92,11 +92,10 @@ fun OAClock(
     var currentThumbOffset: Offset by remember(radius) {
         mutableStateOf(
             calculateThumbPosition(
-                currentOffset = Offset(
+                newPosition = Offset(
                     x = center.x + (radius) * cos(0.getAngleInRadians()),
                     y = center.y + (radius) * sin(0.getAngleInRadians()),
                 ),
-                dragAmount = Offset.Zero,
                 center = center,
                 radius = radius,
                 thumbSize = thumbSize,
@@ -117,24 +116,23 @@ fun OAClock(
                 coroutineScope {
                     detectDragGestures(
                         onDragEnd = {
-                            launch {
-                                calculateInstantTouchThumbPosition(
-                                    touchOffset = currentThumbOffset,
-                                    center = center,
-                                    radius = radius,
-                                    thumbSize = thumbSize,
-                                ).also { position ->
-                                    launch { animatedOffset.animateTo(position) }
-                                }
+                            calculateInstantTouchThumbPosition(
+                                touchOffset = currentThumbOffset,
+                                center = center,
+                                radius = radius,
+                                thumbSize = thumbSize,
+                            ).also { position ->
+                                launch { animatedOffset.animateTo(position) }
                             }
                         }
                     ) { change, dragAmount ->
                         change.consume()
 
                         launch {
+                            val newPosition = currentThumbOffset + dragAmount
+
                             currentThumbOffset = calculateThumbPosition(
-                                currentOffset = currentThumbOffset,
-                                dragAmount = dragAmount,
+                                newPosition = newPosition,
                                 center = center,
                                 radius = radius,
                                 thumbSize = thumbSize,
@@ -272,15 +270,13 @@ private fun DrawScope.drawHours(
 }
 
 private fun calculateThumbPosition(
-    currentOffset: Offset,
-    dragAmount: Offset,
+    newPosition: Offset,
     center: Offset,
     radius: Float,
     thumbSize: Float,
 ): Offset {
     if (radius == 0f) return Offset.Zero
 
-    val newPosition = currentOffset + dragAmount
     val angle = atan2(newPosition.y - center.y, newPosition.x - center.x)
     val thumbRadius = (radius * THUMB_PADDING) - thumbSize / 2
 
