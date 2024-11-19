@@ -91,7 +91,7 @@ fun ArcObjectAnimation(
     }
 }
 
-fun calculateObjectOffset(center: Offset, radius: Float, angle: Float): Offset {
+private fun calculateObjectOffset(center: Offset, radius: Float, angle: Float): Offset {
     val radians = angle * PI.toFloat() / 180f
     return Offset(
         center.x + radius * cos(radians),

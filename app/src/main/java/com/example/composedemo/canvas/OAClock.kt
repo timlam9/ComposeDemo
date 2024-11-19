@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -70,34 +72,7 @@ fun OAClock(
     val thumbSize by remember { mutableFloatStateOf(radius / 6) }
 
 
-
-
-    val progress = remember { Animatable(0f) }
-    var animatedEndAngle by remember { mutableFloatStateOf(0f) }
-    var animatedStartAngle by remember { mutableFloatStateOf(0f) }
-
-    fun calculateAnimatedThumbOffset(startAngle: Float, endAngle: Float, progress: Float): Offset {
-        val currentAngle = startAngle + (endAngle - startAngle) * progress
-        val objectOffset = calculateObjectOffset(center, radius * PADDING, currentAngle)
-
-        if (progress == 1f) animatedStartAngle = animatedEndAngle
-
-        return objectOffset
-    }
-
-    val animatedThumbOffset by remember(progress.value, animatedEndAngle, animatedStartAngle) {
-        mutableStateOf(
-            calculateAnimatedThumbOffset(
-                startAngle = animatedStartAngle,
-                endAngle = animatedEndAngle,
-                progress = progress.value,
-            )
-        )
-    }
-
-
-
-
+    var isDragging by remember { mutableStateOf(false) }
 
     val initialThumbOffset by remember(radius) {
         mutableStateOf(
@@ -124,6 +99,52 @@ fun OAClock(
     }
 
 
+    val progress = remember { Animatable(0f) }
+    var animatedEndAngle by remember { mutableFloatStateOf(0.getAngleInRadians()) }
+    var animatedStartAngle by remember { mutableFloatStateOf(0.getAngleInRadians()) }
+
+    var animatedThumbOffset by remember(initialThumbOffset) {
+        mutableStateOf(currentThumbOffset)
+    }
+
+    LaunchedEffect(isDragging, animatedOffset.value) {
+        if (isDragging) {
+            animatedThumbOffset = animatedOffset.value
+        } else {
+            println("TAGARA | NOT DRAGGING: ${animatedOffset.value}")
+        }
+    }
+
+    LaunchedEffect(isDragging, animatedStartAngle, animatedEndAngle, progress.value) {
+        if (isDragging) {
+            println("TAGARA | DRAGGING: $animatedStartAngle, $animatedEndAngle, ${progress.value}")
+        } else {
+            fun calculateAnimatedThumbOffset(
+                startAngle: Float,
+                endAngle: Float,
+                progress: Float,
+            ): Offset {
+                val currentAngle = startAngle + (endAngle - startAngle) * progress
+
+                val objectOffset = calculateSnappedThumbPosition(
+                    snappedAngle = currentAngle.toRadians(),
+                    center = center,
+                    radius = radius,
+                    thumbSize = thumbSize,
+                )
+
+                if (progress == 1f) animatedStartAngle = animatedEndAngle
+
+                return objectOffset
+            }
+
+            animatedThumbOffset = calculateAnimatedThumbOffset(
+                startAngle = animatedStartAngle,
+                endAngle = animatedEndAngle,
+                progress = progress.value,
+            )
+        }
+    }
 
     Canvas(
         modifier = modifier
@@ -134,28 +155,47 @@ fun OAClock(
                 coroutineScope {
                     detectDragGestures(
                         onDragEnd = {
+                            val snappedAngle = currentThumbOffset.calculateSnappedAngle(center)
+
                             calculateSnappedThumbPosition(
-                                snappedAngle = currentThumbOffset.calculateSnappedAngle(center),
+                                snappedAngle = snappedAngle,
                                 center = center,
                                 radius = radius,
                                 thumbSize = thumbSize,
                             ).also { position ->
-                                launch { animatedOffset.animateTo(position) }
+
+                                animatedEndAngle = position
+                                    .calculateSnappedAngle(center)
+                                    .toDegrees()
+                                animatedStartAngle = animatedEndAngle
+
+                                launch {
+                                    progress.snapToValue()
+                                }
+
+                                launch {
+                                    currentThumbOffset = position
+                                    animatedOffset.animateTo(position)
+
+
+
+                                    isDragging = false
+                                }
                             }
                         }
                     ) { change, dragAmount ->
                         change.consume()
+                        isDragging = true
 
-                        launch {
-                            val newPosition = currentThumbOffset + dragAmount
+                        val newPosition = currentThumbOffset + dragAmount
 
-                            currentThumbOffset = calculateThumbPosition(
-                                angle = newPosition.calculateAngle(center),
-                                center = center,
-                                radius = radius,
-                                thumbSize = thumbSize,
-                            )
-                            animatedOffset.animateTo(currentThumbOffset)
+                        currentThumbOffset = calculateThumbPosition(
+                            angle = newPosition.calculateAngle(center),
+                            center = center,
+                            radius = radius,
+                            thumbSize = thumbSize,
+                        ).also { position ->
+                            launch { animatedOffset.animateTo(position) }
                         }
                     }
                 }
@@ -164,38 +204,47 @@ fun OAClock(
                 coroutineScope {
                     while (true) {
                         awaitPointerEventScope {
-                            val endPosition = awaitFirstDown().position
+                            val touchedPosition = awaitFirstDown().position
 
-                            calculateSnappedThumbPosition(
-                                snappedAngle = endPosition.calculateSnappedAngle(center),
-                                center = center,
-                                radius = radius,
-                                thumbSize = thumbSize,
-                            ).also { position ->
-                                launch {
-                                    val deltaY = position.y - center.y
-                                    val deltaX = position.x - center.x
-                                    val radians = atan2(deltaY, deltaX)
-
-                                    val snappedAngle = radians
-                                        .toDegrees()
-                                        .toDegrees()
-                                        .roundToInt()
-                                        .let { angle ->
-                                            angle / HOUR_STEP * HOUR_STEP.toRadians()
-                                        }
-
+                            touchedPosition
+                                .calculateSnappedAngle(center)
+                                .toDegrees()
+                                .also { snappedAngle ->
                                     animatedEndAngle = snappedAngle
-                                    progress.startAnimationFromStart()
+
+                                    calculateSnappedThumbPosition(
+                                        snappedAngle = snappedAngle.toRadians(),
+                                        center = center,
+                                        radius = radius,
+                                        thumbSize = thumbSize
+                                    ).also {
+                                        currentThumbOffset = it
+                                        launch {
+                                            animatedOffset.snapTo(currentThumbOffset)
+                                        }
+                                    }
+
+                                    launch {
+                                        progress.startAnimationFromStart()
+                                    }
                                 }
-                            }
                         }
                     }
 
                 }
             },
     ) {
-        val circlePath = Path().apply { addOval(Rect(animatedOffset.value, thumbSize)) }
+        val circlePath = Path().apply { addOval(Rect(animatedThumbOffset, thumbSize)) }
+
+        drawText(
+            textMeasurer = textMeasurer,
+            text = "Drag: $isDragging",
+            style = textStyle.copy(
+                fontSize = 24.sp,
+                color = if (isDragging) Color.Green else Color.Red
+            ),
+            topLeft = Offset(x = center.x / 2, y = center.y / 3)
+        )
 
         drawHours(
             singleNumberTextLayoutResult = singleNumberTextLayoutResult,
@@ -215,18 +264,18 @@ fun OAClock(
         drawLine(
             color = thumbColor,
             start = center,
-            end = animatedOffset.value,
+            end = animatedThumbOffset,
             strokeWidth = 10f
         )
 
         drawCircle(
             color = thumbColor,
             radius = thumbSize,
-            center = animatedOffset.value,
+            center = animatedThumbOffset,
         )
 
         drawCircle(
-            color = Color.Blue,
+            color = thumbColor,
             radius = thumbSize,
             center = animatedThumbOffset,
         )
@@ -250,6 +299,10 @@ private suspend fun Animatable<Float, AnimationVector1D>.startAnimationFromStart
         targetValue = 1f,
         animationSpec = tween(delayMillis = 250),
     )
+}
+
+private suspend fun Animatable<Float, AnimationVector1D>.snapToValue() {
+    snapTo(1f)
 }
 
 private fun DrawScope.drawHours(
