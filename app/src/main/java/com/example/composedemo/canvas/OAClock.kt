@@ -158,6 +158,7 @@ fun OAClock(
                                 thumbSize = thumbSize,
                             ).also { position ->
 
+                                // Update angles in order to be aligned for the touch animation
                                 animatedEndAngle = position
                                     .calculateSnappedAngle(center)
                                     .toDegrees()
@@ -165,6 +166,7 @@ fun OAClock(
 
                                 launch { progress.snapToValue() }
 
+                                // Update the thumb position to snap to hours step
                                 launch {
                                     currentThumbOffset = position
                                     animatedOffset.animateTo(position)
@@ -172,22 +174,23 @@ fun OAClock(
                                     isDragging = false
                                 }
                             }
-                        }
-                    ) { change, dragAmount ->
-                        change.consume()
-                        isDragging = true
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            isDragging = true
 
-                        val newPosition = currentThumbOffset + dragAmount
+                            val newPosition = currentThumbOffset + dragAmount
 
-                        currentThumbOffset = calculateThumbPosition(
-                            angle = newPosition.calculateAngle(center),
-                            center = center,
-                            radius = radius,
-                            thumbSize = thumbSize,
-                        ).also { position ->
-                            launch { animatedOffset.animateTo(position) }
+                            currentThumbOffset = calculateThumbPosition(
+                                angle = newPosition.calculateAngle(center),
+                                center = center,
+                                radius = radius,
+                                thumbSize = thumbSize,
+                            ).also { position ->
+                                launch { animatedOffset.animateTo(position) }
+                            }
                         }
-                    }
+                    )
                 }
             }
             .pointerInput(Unit) {
@@ -202,6 +205,7 @@ fun OAClock(
                                 .also { snappedAngle ->
                                     animatedEndAngle = snappedAngle
 
+                                    // Update thumb offset in order to be aligned for the drag animation
                                     calculateThumbPosition(
                                         angle = snappedAngle.toRadians(),
                                         center = center,
@@ -209,14 +213,14 @@ fun OAClock(
                                         thumbSize = thumbSize
                                     ).also {
                                         currentThumbOffset = it
+
                                         launch {
                                             animatedOffset.snapTo(currentThumbOffset)
                                         }
                                     }
 
-                                    launch {
-                                        progress.startAnimationFromStart()
-                                    }
+                                    // Animate with arc motion to end/touched position
+                                    launch { progress.startAnimationFromStart() }
                                 }
                         }
                     }
@@ -350,6 +354,6 @@ private fun Int.getAngleInRadians(
     return ((this * step) - offset).toRadians()
 }
 
-fun <T : Number> T.toDegrees(): Float = (this.toFloat() * (180 / PI)).toFloat()
+private fun <T : Number> T.toDegrees(): Float = (this.toFloat() * (180 / PI)).toFloat()
 
-fun <T : Number> T.toRadians(): Float = (this.toFloat() * (PI / 180)).toFloat()
+private fun <T : Number> T.toRadians(): Float = (this.toFloat() * (PI / 180)).toFloat()
