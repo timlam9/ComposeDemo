@@ -1,6 +1,7 @@
 package com.example.composedemo.canvas
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -42,6 +43,9 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 
 private const val HOUR_STEP = 15
+private const val DEGREES_OFFSET = 90
+private const val THUMB_PADDING = 0.88f
+private const val PADDING = 0.8f
 
 @Composable
 fun OAClock(
@@ -72,8 +76,7 @@ fun OAClock(
 
     fun calOffset(startAngle: Float, endAngle: Float, progress: Float): Offset {
         val currentAngle = startAngle + (endAngle - startAngle) * progress
-        val objectOffset = calculateObjectOffset(center, radius * 0.8f, currentAngle)
-        println("TAGARA: $objectOffset, progress: $progress")
+        val objectOffset = calculateObjectOffset(center, radius * PADDING, currentAngle)
 
         if (progress == 1f) {
             animatedStartAngle = animatedEndAngle
@@ -82,7 +85,7 @@ fun OAClock(
         return objectOffset
     }
 
-    var animatedThumbOffset by remember(progress.value, animatedEndAngle, animatedStartAngle) {
+    val animatedThumbOffset by remember(progress.value, animatedEndAngle, animatedStartAngle) {
         mutableStateOf(calOffset(animatedStartAngle, animatedEndAngle, progress.value))
     }
 
@@ -90,8 +93,8 @@ fun OAClock(
         mutableStateOf(
             calculateThumbPosition(
                 currentOffset = Offset(
-                    x = center.x + (radius) * cos(0.getAngle()),
-                    y = center.y + (radius) * sin(0.getAngle()),
+                    x = center.x + (radius) * cos(0.getAngleInRadians()),
+                    y = center.y + (radius) * sin(0.getAngleInRadians()),
                 ),
                 dragAmount = Offset.Zero,
                 center = center,
@@ -146,7 +149,6 @@ fun OAClock(
                     while (true) {
                         awaitPointerEventScope {
                             val endPosition = awaitFirstDown().position
-                            println("TAGARA, end position: $endPosition")
 
                             calculateInstantTouchThumbPosition(
                                 touchOffset = endPosition,
@@ -154,26 +156,21 @@ fun OAClock(
                                 radius = radius,
                                 thumbSize = thumbSize,
                             ).also { position ->
-                                println("TAGARA, cal position: $position")
-
                                 launch {
-                                    val deltaX = position.x - center.x
                                     val deltaY = position.y - center.y
+                                    val deltaX = position.x - center.x
                                     val radians = atan2(deltaY, deltaX)
 
-                                    var degrees = radians * 180 / PI
-                                    val snappedAngle =
-                                        (degrees * 180 / PI).roundToInt() / 15 * 15 * PI / 180
+                                    val snappedAngle = radians
+                                        .toDegrees()
+                                        .toDegrees()
+                                        .roundToInt()
+                                        .let { angle ->
+                                            angle / HOUR_STEP * HOUR_STEP.toRadians()
+                                        }
 
-                                    animatedEndAngle = snappedAngle.toFloat()
-
-                                    progress.snapTo(0f)
-                                    println("TAGARA, animate")
-
-                                    progress.animateTo(
-                                        targetValue = 1f,
-                                        animationSpec = tween(delayMillis = 250),
-                                    )
+                                    animatedEndAngle = snappedAngle
+                                    progress.startAnimationFromStart()
                                 }
                             }
                         }
@@ -231,6 +228,14 @@ fun OAClock(
     }
 }
 
+private suspend fun Animatable<Float, AnimationVector1D>.startAnimationFromStart() {
+    snapTo(0f)
+    animateTo(
+        targetValue = 1f,
+        animationSpec = tween(delayMillis = 250),
+    )
+}
+
 private fun DrawScope.drawHours(
     singleNumberTextLayoutResult: TextLayoutResult,
     numberTextLayoutResult: TextLayoutResult,
@@ -251,8 +256,8 @@ private fun DrawScope.drawHours(
                 else -> numberTextLayoutResult.size.height.toFloat()
             }
 
-            val x = center.x - textWidth / 2 + (radius * 0.8f) * cos(i.getAngle())
-            val y = center.y - textHeight / 2 + (radius * 0.8f) * sin(i.getAngle())
+            val x = center.x - textWidth / 2 + (radius * PADDING) * cos(i.getAngleInRadians())
+            val y = center.y - textHeight / 2 + (radius * PADDING) * sin(i.getAngleInRadians())
 
             drawText(
                 textMeasurer = textMeasurer,
@@ -266,9 +271,6 @@ private fun DrawScope.drawHours(
     }
 }
 
-
-private var previousNumber = 0
-
 private fun calculateThumbPosition(
     currentOffset: Offset,
     dragAmount: Offset,
@@ -280,15 +282,7 @@ private fun calculateThumbPosition(
 
     val newPosition = currentOffset + dragAmount
     val angle = atan2(newPosition.y - center.y, newPosition.x - center.x)
-    val thumbRadius = (radius * 0.88f) - thumbSize / 2
-
-    val currentAngle = getAngleFromCircle(center, newPosition).roundToInt()
-
-    val number = (currentAngle / HOUR_STEP)
-    if (number != previousNumber) {
-        println("TAGARA: Number -> $number")
-        previousNumber = number
-    }
+    val thumbRadius = (radius * THUMB_PADDING) - thumbSize / 2
 
     return Offset(
         center.x + thumbRadius * cos(angle),
@@ -304,36 +298,47 @@ private fun calculateInstantTouchThumbPosition(
 ): Offset {
     if (radius == 0f) return Offset.Zero
 
-    val thumbRadius = (radius * 0.88f) - thumbSize / 2
-
+    val thumbRadius = (radius * THUMB_PADDING) - thumbSize / 2
     val angle = atan2(touchOffset.y - center.y, touchOffset.x - center.x)
-    val snappedAngle = (angle * 180 / PI).roundToInt() / 15 * 15 * PI / 180
-
-    val number = (snappedAngle.toInt() / HOUR_STEP)
-    if (number != previousNumber) {
-        println("TAGARA: Number -> $number")
-        previousNumber = number
-    }
+    val snappedAngle = angle.toDegrees().roundToInt() / HOUR_STEP * HOUR_STEP.toRadians()
 
     return Offset(
-        center.x + thumbRadius * cos(snappedAngle.toFloat()),
-        center.y + thumbRadius * sin(snappedAngle.toFloat())
+        center.x + thumbRadius * cos(snappedAngle),
+        center.y + thumbRadius * sin(snappedAngle)
     )
 }
 
+private fun Int.getAngleInRadians(
+    step: Int = HOUR_STEP,
+    offset: Int = DEGREES_OFFSET,
+): Float {
+    return ((this * step) - offset).toRadians()
+}
 
-private fun Int.getAngle(): Float = ((this * HOUR_STEP) - 90) * (PI / 180).toFloat()
-
-private fun getAngleFromCircle(center: Offset, point: Offset): Float {
+private fun getAngleFromCircleInDegrees(
+    center: Offset,
+    point: Offset,
+): Float {
     val deltaX = point.x - center.x
     val deltaY = point.y - center.y
     val radians = atan2(deltaY, deltaX)
 
-    var degrees = radians * 180 / PI
-    degrees += 90f
+    var degrees = radians.toDegrees() + DEGREES_OFFSET
 
-    if (degrees < 0) degrees += 360f
-    if (degrees == 24.0) degrees = 0.0
+    if (degrees < 0) degrees += 360
+    if (degrees == 24f) degrees = 0f
 
-    return degrees.toFloat()
+    return degrees
 }
+
+fun Int.toDegrees(): Float = (this * (180 / PI)).toFloat()
+
+fun Double.toDegrees(): Float = (this * (180 / PI)).toFloat()
+
+fun Float.toDegrees(): Float = (this * (180 / PI)).toFloat()
+
+fun Int.toRadians(): Float = (this * (PI / 180)).toFloat()
+
+fun Double.toRadians(): Float = (this * (PI / 180)).toFloat()
+
+fun Float.toRadians(): Float = (this * (PI / 180)).toFloat()
