@@ -35,7 +35,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -126,8 +125,8 @@ fun OAClock(
             ): Offset {
                 val currentAngle = startAngle + (endAngle - startAngle) * progress
 
-                val objectOffset = calculateSnappedThumbPosition(
-                    snappedAngle = currentAngle.toRadians(),
+                val objectOffset = calculateThumbPosition(
+                    angle = currentAngle.toRadians(),
                     center = center,
                     radius = radius,
                     thumbSize = thumbSize,
@@ -157,8 +156,8 @@ fun OAClock(
                         onDragEnd = {
                             val snappedAngle = currentThumbOffset.calculateSnappedAngle(center)
 
-                            calculateSnappedThumbPosition(
-                                snappedAngle = snappedAngle,
+                            calculateThumbPosition(
+                                angle = snappedAngle,
                                 center = center,
                                 radius = radius,
                                 thumbSize = thumbSize,
@@ -169,15 +168,11 @@ fun OAClock(
                                     .toDegrees()
                                 animatedStartAngle = animatedEndAngle
 
-                                launch {
-                                    progress.snapToValue()
-                                }
+                                launch { progress.snapToValue() }
 
                                 launch {
                                     currentThumbOffset = position
                                     animatedOffset.animateTo(position)
-
-
 
                                     isDragging = false
                                 }
@@ -212,8 +207,8 @@ fun OAClock(
                                 .also { snappedAngle ->
                                     animatedEndAngle = snappedAngle
 
-                                    calculateSnappedThumbPosition(
-                                        snappedAngle = snappedAngle.toRadians(),
+                                    calculateThumbPosition(
+                                        angle = snappedAngle.toRadians(),
                                         center = center,
                                         radius = radius,
                                         thumbSize = thumbSize
@@ -235,16 +230,6 @@ fun OAClock(
             },
     ) {
         val circlePath = Path().apply { addOval(Rect(animatedThumbOffset, thumbSize)) }
-
-        drawText(
-            textMeasurer = textMeasurer,
-            text = "Drag: $isDragging",
-            style = textStyle.copy(
-                fontSize = 24.sp,
-                color = if (isDragging) Color.Green else Color.Red
-            ),
-            topLeft = Offset(x = center.x / 2, y = center.y / 3)
-        )
 
         drawHours(
             singleNumberTextLayoutResult = singleNumberTextLayoutResult,
@@ -360,20 +345,6 @@ private fun calculateThumbPosition(
     return Offset(
         center.x + thumbRadius * cos(angle),
         center.y + thumbRadius * sin(angle)
-    )
-}
-
-private fun calculateSnappedThumbPosition(
-    snappedAngle: Float,
-    center: Offset,
-    radius: Float,
-    thumbSize: Float,
-): Offset {
-    val thumbRadius = (radius * THUMB_PADDING) - thumbSize / 2
-
-    return Offset(
-        center.x + thumbRadius * cos(snappedAngle),
-        center.y + thumbRadius * sin(snappedAngle)
     )
 }
 
