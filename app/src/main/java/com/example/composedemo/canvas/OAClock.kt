@@ -97,7 +97,6 @@ fun OAClock(
         Animatable(currentThumbOffset, Offset.VectorConverter)
     }
 
-
     val progress = remember { Animatable(0f) }
     var animatedEndAngle by remember { mutableFloatStateOf(0.getAngleInRadians()) }
     var animatedStartAngle by remember { mutableFloatStateOf(0.getAngleInRadians()) }
@@ -109,15 +108,11 @@ fun OAClock(
     LaunchedEffect(isDragging, animatedOffset.value) {
         if (isDragging) {
             animatedThumbOffset = animatedOffset.value
-        } else {
-            println("TAGARA | NOT DRAGGING: ${animatedOffset.value}")
         }
     }
 
     LaunchedEffect(isDragging, animatedStartAngle, animatedEndAngle, progress.value) {
-        if (isDragging) {
-            println("TAGARA | DRAGGING: $animatedStartAngle, $animatedEndAngle, ${progress.value}")
-        } else {
+        if (!isDragging) {
             fun calculateAnimatedThumbOffset(
                 startAngle: Float,
                 endAngle: Float,
@@ -348,7 +343,6 @@ private fun calculateThumbPosition(
     )
 }
 
-
 private fun Int.getAngleInRadians(
     step: Int = HOUR_STEP,
     offset: Int = DEGREES_OFFSET,
@@ -356,31 +350,6 @@ private fun Int.getAngleInRadians(
     return ((this * step) - offset).toRadians()
 }
 
-private fun getAngleFromCircleInDegrees(
-    center: Offset,
-    point: Offset,
-): Float {
-    val deltaX = point.x - center.x
-    val deltaY = point.y - center.y
-    val radians = atan2(deltaY, deltaX)
+fun <T : Number> T.toDegrees(): Float = (this.toFloat() * (180 / PI)).toFloat()
 
-    var degrees = radians.toDegrees() + DEGREES_OFFSET
-
-    if (degrees < 0) degrees += 360
-    if (degrees == 24f) degrees = 0f
-
-    return degrees
-}
-
-
-fun Int.toDegrees(): Float = (this * (180 / PI)).toFloat()
-
-fun Double.toDegrees(): Float = (this * (180 / PI)).toFloat()
-
-fun Float.toDegrees(): Float = (this * (180 / PI)).toFloat()
-
-fun Int.toRadians(): Float = (this * (PI / 180)).toFloat()
-
-fun Double.toRadians(): Float = (this * (PI / 180)).toFloat()
-
-fun Float.toRadians(): Float = (this * (PI / 180)).toFloat()
+fun <T : Number> T.toRadians(): Float = (this.toFloat() * (PI / 180)).toFloat()
