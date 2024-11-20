@@ -6,11 +6,29 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +37,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -35,7 +54,9 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -48,6 +69,118 @@ private const val HOUR_STEP = 15
 private const val DEGREES_OFFSET = 90
 private const val THUMB_PADDING = 0.88f
 private const val PADDING = 0.8f
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OAClockDialog(
+    displayDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    if (displayDialog) {
+        BasicAlertDialog(onDismissRequest = onDismiss) {
+            Surface(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .wrapContentHeight(),
+                shape = MaterialTheme.shapes.large,
+                tonalElevation = AlertDialogDefaults.TonalElevation,
+                color = Color.White,
+                content = { ClockDialogContent(onDismiss = onDismiss, onConfirm = onConfirm) },
+            )
+        }
+    }
+}
+
+@Composable
+fun ClockDialogContent(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var time by remember { mutableStateOf("0") }
+    Column(
+        modifier = modifier.padding(16.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        Text(
+            text = "Select time",
+            style = MaterialTheme.typography.labelMedium.copy(color = Color.Black)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(width = 100.dp)
+                    .clickable(onClick = {})
+                    .clip(shape = RoundedCornerShape(4.dp))
+                    .background(color = Color.Black)
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 6.dp, top = 20.dp),
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                Text(
+                    text = time,
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        fontSize = 52.sp,
+                    ),
+                )
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = ":",
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    fontSize = 62.sp,
+                )
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Box(
+                modifier = Modifier
+                    .width(width = 100.dp)
+                    .clickable(onClick = {})
+                    .clip(shape = RoundedCornerShape(4.dp))
+                    .background(color = Color.LightGray)
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 6.dp, top = 20.dp),
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                Text(
+                    text = "20",
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        color = Color.Black,
+                        textAlign = TextAlign.Center,
+                        fontSize = 52.sp,
+                    ),
+                )
+            }
+        }
+        OAClock(onHourSelected = { time = it.toString() })
+        Row {
+            Spacer(modifier = Modifier.weight(1f))
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "Cancel",
+                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            TextButton(onClick = { onConfirm(time) }) {
+                Text(
+                    text = "OK",
+                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun OAClock(
@@ -255,13 +388,6 @@ fun OAClock(
             },
     ) {
         val circlePath = Path().apply { addOval(Rect(animatedThumbOffset, thumbSize)) }
-
-        drawText(
-            textMeasurer = textMeasurer,
-            text = selectedHour.toString(),
-            style = textStyle,
-            topLeft = Offset(x = center.x, y = center.y / 2)
-        )
 
         drawHours(
             singleNumberTextLayoutResult = singleNumberTextLayoutResult,
