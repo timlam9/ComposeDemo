@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,6 +51,7 @@ private const val PADDING = 0.8f
 
 @Composable
 fun OAClock(
+    onHourSelected: (hour: Int) -> Unit,
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.LightGray,
     thumbColor: Color = Color.Red,
@@ -70,9 +72,9 @@ fun OAClock(
     val center by remember { mutableStateOf(Offset(radius, radius)) }
     val thumbSize by remember { mutableFloatStateOf(radius / 6) }
 
-
     var isDragging by remember { mutableStateOf(false) }
 
+    // Drag animation properties
     val initialThumbOffset by remember(radius) {
         mutableStateOf(
             Offset(
@@ -97,20 +99,24 @@ fun OAClock(
         Animatable(currentThumbOffset, Offset.VectorConverter)
     }
 
+    // Touch animation properties
     val progress = remember { Animatable(0f) }
     var animatedEndAngle by remember { mutableFloatStateOf(0.getAngleInRadians()) }
     var animatedStartAngle by remember { mutableFloatStateOf(0.getAngleInRadians()) }
 
+    // Final animation value
     var animatedThumbOffset by remember(initialThumbOffset) {
         mutableStateOf(currentThumbOffset)
     }
 
+    // Update drag animation
     LaunchedEffect(isDragging, animatedOffset.value) {
         if (isDragging) {
             animatedThumbOffset = animatedOffset.value
         }
     }
 
+    // Update touch animation
     LaunchedEffect(isDragging, animatedStartAngle, animatedEndAngle, progress.value) {
         if (!isDragging) {
             fun calculateAnimatedThumbOffset(
@@ -137,6 +143,26 @@ fun OAClock(
                 endAngle = animatedEndAngle,
                 progress = progress.value,
             )
+        }
+    }
+
+    fun Offset.getSelectedHour(): Int {
+        val angle = getAngleFromCircleInDegrees(center, this)
+        val number = (angle / HOUR_STEP).roundToInt()
+
+        return number
+    }
+
+    var selectedHour by remember(initialThumbOffset) {
+        mutableIntStateOf(initialThumbOffset.getSelectedHour())
+    }
+
+    LaunchedEffect(animatedOffset.value) {
+        val newHour = animatedOffset.value.getSelectedHour()
+
+        if (newHour != selectedHour) {
+            selectedHour = newHour
+            onHourSelected(selectedHour)
         }
     }
 
@@ -229,6 +255,13 @@ fun OAClock(
             },
     ) {
         val circlePath = Path().apply { addOval(Rect(animatedThumbOffset, thumbSize)) }
+
+        drawText(
+            textMeasurer = textMeasurer,
+            text = selectedHour.toString(),
+            style = textStyle,
+            topLeft = Offset(x = center.x, y = center.y / 2)
+        )
 
         drawHours(
             singleNumberTextLayoutResult = singleNumberTextLayoutResult,
@@ -357,3 +390,22 @@ private fun Int.getAngleInRadians(
 private fun <T : Number> T.toDegrees(): Float = (this.toFloat() * (180 / PI)).toFloat()
 
 private fun <T : Number> T.toRadians(): Float = (this.toFloat() * (PI / 180)).toFloat()
+
+
+private fun getAngleFromCircleInDegrees(
+    center: Offset,
+    point: Offset,
+): Float {
+    val deltaX = point.x - center.x
+    val deltaY = point.y - center.y
+    val radians = atan2(deltaY, deltaX)
+
+    var degrees = radians.toDegrees()
+    degrees += 90f
+
+    if (degrees < 0) degrees += 360
+
+    if (degrees == 24f) degrees = 0f
+
+    return degrees
+}

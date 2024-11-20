@@ -14,6 +14,10 @@ fun ClockScreen(modifier: Modifier = Modifier) {
     ) {
 //        Gesture()
 //        GeminiClock()
-        OAClock()
+        OAClock(
+            onHourSelected = {
+                println("Hour selected: $it")
+            }
+        )
     }
 }
