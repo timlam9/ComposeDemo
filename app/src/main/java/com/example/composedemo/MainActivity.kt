@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.composedemo.stability.CounterRecomposition
+import com.example.composedemo.stability.ListRecompositionTrackerScreen
 import com.example.composedemo.stability.RecompositionTrackerViewModel
 import com.example.composedemo.stability.SlidingRecompositionTrackerViewModel
 import com.example.composedemo.stability.SlidingScreen
@@ -21,7 +22,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             println("Set content recomposed")
 
-            CounterRecomposition(viewModel = viewModel)
+            ListRecompositionTrackerScreen()
+//            CounterRecomposition(viewModel = viewModel)
 //            SlidingScreen(viewModel = slidingViewModel)
         }
     }

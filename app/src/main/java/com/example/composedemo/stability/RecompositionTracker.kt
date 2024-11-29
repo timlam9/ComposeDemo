@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 
 // Understanding the recomposition scope
+// https://proandroiddev.com/6-jetpack-compose-guidelines-to-optimize-your-app-performance-be18533721f9
 
 class StateHoldingClass {
     var counter by mutableStateOf(0)
