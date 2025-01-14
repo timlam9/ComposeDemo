@@ -1,4 +1,4 @@
-package com.example.composedemo.stability
+package com.example.composedemo.compose.stability
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background

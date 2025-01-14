@@ -1,4 +1,4 @@
-package com.example.composedemo.canvas
+package com.example.composedemo.compose.canvas
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D

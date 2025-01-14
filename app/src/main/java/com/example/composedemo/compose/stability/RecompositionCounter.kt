@@ -1,4 +1,4 @@
-package com.example.composedemo.stability
+package com.example.composedemo.compose.stability
 
 import android.util.Log
 import androidx.compose.foundation.interaction.Interaction

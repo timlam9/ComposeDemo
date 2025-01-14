@@ -4,11 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.composedemo.stability.CounterRecomposition
-import com.example.composedemo.stability.ListRecompositionTrackerScreen
-import com.example.composedemo.stability.RecompositionTrackerViewModel
-import com.example.composedemo.stability.SlidingRecompositionTrackerViewModel
-import com.example.composedemo.stability.SlidingScreen
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
+import com.example.composedemo.compose.canvas.ClockScreen
+import com.example.composedemo.compose.stability.CounterRecomposition
+import com.example.composedemo.compose.stability.ListRecompositionTrackerScreen
+import com.example.composedemo.compose.stability.RecompositionTrackerViewModel
+import com.example.composedemo.compose.stability.SlidingRecompositionTrackerViewModel
+import com.example.composedemo.compose.stability.SlidingScreen
+import com.example.composedemo.ui.theme.ComposeDemoTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +28,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             println("Set content recomposed")
 
-            ListRecompositionTrackerScreen()
+            ComposeDemoTheme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    ClockScreen(modifier = Modifier.padding(innerPadding))
+                }
+            }
+
+//            ListRecompositionTrackerScreen()
 //            CounterRecomposition(viewModel = viewModel)
 //            SlidingScreen(viewModel = slidingViewModel)
         }

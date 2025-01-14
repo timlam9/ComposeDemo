@@ -1,4 +1,4 @@
-package com.example.composedemo.effects
+package com.example.composedemo.compose.effects
 
 import android.util.Log
 import androidx.activity.OnBackPressedCallback

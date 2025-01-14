@@ -1,4 +1,4 @@
-package com.example.composedemo.stability
+package com.example.composedemo.compose.stability
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

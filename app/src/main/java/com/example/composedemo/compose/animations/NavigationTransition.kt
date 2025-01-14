@@ -1,4 +1,4 @@
-package com.example.composedemo.animations
+package com.example.composedemo.compose.animations
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition

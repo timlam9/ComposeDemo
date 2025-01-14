@@ -1,4 +1,4 @@
-package com.example.composedemo.effects
+package com.example.composedemo.compose.effects
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

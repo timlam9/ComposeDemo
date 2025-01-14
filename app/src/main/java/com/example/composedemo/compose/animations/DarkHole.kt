@@ -1,4 +1,4 @@
-package com.example.composedemo.animations
+package com.example.composedemo.compose.animations
 
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
