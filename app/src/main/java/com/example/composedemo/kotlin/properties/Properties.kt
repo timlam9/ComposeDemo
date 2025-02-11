@@ -1,4 +1,4 @@
-package com.example.composedemo.kotlin
+package com.example.composedemo.kotlin.properties
 
 // Agenda:
 // ----------------------------------------------------------------------------

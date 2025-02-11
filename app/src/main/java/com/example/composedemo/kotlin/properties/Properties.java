@@ -1,4 +1,4 @@
-package com.example.composedemo.kotlin;
+package com.example.composedemo.kotlin.properties;
 
 // 2.2.1
 public class Properties {
