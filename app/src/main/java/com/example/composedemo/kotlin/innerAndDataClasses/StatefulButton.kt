@@ -1,4 +1,4 @@
-package com.example.composedemo.kotlin.visibilityAndInnerClasses
+package com.example.composedemo.kotlin.innerAndDataClasses
 
 import java.io.Serializable
 
@@ -21,7 +21,9 @@ class StatefulButton: View {
     }
 
     // has not reference of the outer class
-    class ButtonState: State
+     class ButtonState: State {
+//        fun getOuterReference(): StatefulButton = this@StatefulButton
+    }
 }
 
 class Outer {
@@ -35,3 +37,4 @@ class Outer {
 // --> Inner classes has a reference to the outer class and nested classes don't
 
 // 4.1.5 Sealed classes (page: 120/550)
+

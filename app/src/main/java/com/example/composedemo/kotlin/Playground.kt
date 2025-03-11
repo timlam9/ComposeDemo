@@ -1,32 +1,17 @@
 package com.example.composedemo.kotlin
 
-interface TestInterface1 {
-    fun testFunction() = println("test 1")
-}
-
-interface TestInterface2 {
-    fun testFunction() = println("test 2")
-}
-
-class TestClass : TestInterface1, TestInterface2 {
-
-    override fun testFunction() {
-        println("test from TestClass")
-    }
-
-    fun testInterface1Function() {
-        super<TestInterface1>.testFunction() // Calls the default implementation from TestInterface1
-    }
-
-    fun testInterface2Function() {
-        super<TestInterface2>.testFunction() // Calls the default implementation from TestInterface2
-    }
-}
+import com.example.composedemo.kotlin.innerAndDataClasses.Customer
 
 private fun main() {
-    val testClass = TestClass()
+    println(
+        Customer("George", 12345)
+                == Customer("George", 12345)
+    )
 
-    testClass.testFunction()
-    testClass.testInterface1Function()
-    testClass.testInterface2Function()
+    val hashset = hashSetOf(Customer("George", 12345))
+
+    println(hashset.contains(Customer("George", 12345)))
+
+    println(Customer("George", 12345).hashCode()) // 1585817626
+    println(Customer("George", 12345).toString()) // Customer(name=George, postalCode=12345)//Customer(name=George, postalCode=12345)
 }
