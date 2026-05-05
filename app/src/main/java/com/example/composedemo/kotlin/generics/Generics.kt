@@ -1,5 +1,7 @@
 package com.example.composedemo.kotlin.generics
 
+import kotlin.collections.first
+
 internal class Generics {
 
     // Generic property declaration
@@ -30,7 +32,7 @@ internal class Generics {
 
     // Type parameter -> <T>
     // It is used in receivers and return types
-    fun <reT> List<T>.listGenericFunction(param: T): T {
+    fun <T> List<T>.listGenericFunction(param: T): T {
         return first()
     }
 
@@ -85,17 +87,17 @@ internal class Generics {
 
 
 
-    fun printList(l: List<Any>) {
-        when(l) {
-            is List<String> -> println("Strings: $l")
-            is List<Int> -> println("Integers: $l")
-        }
-    }
+//    fun printList(l: List<Any>) {
+//        when(l) {
+//            is List<String> -> println("Strings: $l")
+//            is List<Int> -> println("Integers: $l")
+//        }
+//    }
 
-    fun erasedTypesDemo() {
-        val list = readNumbersOrWords()
-        printList(list)
-    }
+//    fun erasedTypesDemo() {
+//        val list = readNumbersOrWords()
+//        printList(list)
+//    }
 
     fun genericsDemo() {
         // 1. Type arguments
@@ -109,7 +111,5 @@ internal class Generics {
         val helloWorld = StringBuilder("Hello World")
         ensureTrailingPeriod(helloWorld)
         println("Hello World: $helloWorld")
-
-
     }
 }
