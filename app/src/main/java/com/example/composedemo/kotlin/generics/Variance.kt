@@ -36,14 +36,14 @@ internal class Variance {
 
     fun fruitsExample() {
         val apples: MutableList<Apple> = mutableListOf(Apple(weight = 100, color = "red"))
-        val fruits: MutableList<Fruit> = apples  // ❌ if this was allowed
-
-        fruits.add(
-            Orange(
-                weight = 200,
-                juicy = true
-            )
-        ) // Now the original apples list contains an Orange -> 💥 type safety broken.
+//        val fruits: MutableList<Fruit> = apples  // ❌ if this was allowed
+//
+//        fruits.add(
+//            Orange(
+//                weight = 200,
+//                juicy = true
+//            )
+//        ) // Now the original apples list contains an Orange -> 💥 type safety broken.
         val apple: Apple = apples.first() // 💥 runtime crash
     }
 
