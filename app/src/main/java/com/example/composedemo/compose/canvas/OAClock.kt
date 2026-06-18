@@ -57,6 +57,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.skydoves.compose.stability.runtime.TraceRecomposition
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -70,6 +71,7 @@ private const val DEGREES_OFFSET = 90
 private const val THUMB_PADDING = 0.88f
 private const val PADDING = 0.8f
 
+@TraceRecomposition
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OAClockDialog(
@@ -92,6 +94,7 @@ fun OAClockDialog(
     }
 }
 
+@TraceRecomposition
 @Composable
 fun ClockDialogContent(
     onDismiss: () -> Unit,
@@ -182,6 +185,7 @@ fun ClockDialogContent(
     }
 }
 
+@TraceRecomposition
 @Composable
 fun OAClock(
     onHourSelected: (hour: Int) -> Unit,

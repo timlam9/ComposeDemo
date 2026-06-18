@@ -11,7 +11,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.skydoves.compose.stability.runtime.TraceRecomposition
 
+@TraceRecomposition
 @Composable
 fun ClockScreen(modifier: Modifier = Modifier) {
     var displayDialog by remember { mutableStateOf(false) }

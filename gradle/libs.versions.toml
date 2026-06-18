@@ -12,6 +12,7 @@ composeBom = "2026.06.00"
 jetbrainsKotlinJvm = "2.4.0"
 navigationCompose = "2.9.8"
 animationGraphicsAndroid = "1.11.3"
+stabilityAnalyzer = "0.10.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -38,4 +39,4 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.4.
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
-
+stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version.ref = "stabilityAnalyzer" }
