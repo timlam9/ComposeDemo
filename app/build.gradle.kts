@@ -62,6 +62,11 @@ dependencies {
     implementation(project(":DomainModule"))
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.animation.graphics.android)
+
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
+    implementation(libs.koin.composex)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

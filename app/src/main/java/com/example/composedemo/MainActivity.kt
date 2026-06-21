@@ -9,13 +9,10 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.example.composedemo.compose.canvas.ClockScreen
-import com.example.composedemo.compose.stability.ListRecompositionTrackerScreen
+import com.example.composedemo.compose.stabilityAnalyzer.MainScreen
 import com.example.composedemo.compose.stability.RecompositionTrackerViewModel
 import com.example.composedemo.compose.stability.SlidingRecompositionTrackerViewModel
-import com.example.composedemo.kotlin.gooeyEffect.GooeyLoader
 import com.example.composedemo.ui.theme.ComposeDemoTheme
 
 class MainActivity : ComponentActivity() {
@@ -35,8 +32,11 @@ class MainActivity : ComponentActivity() {
             ComposeDemoTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
+                    MainScreen(
+                        modifier = Modifier.padding(innerPadding),
+                    )
 //                    GooeyLoader(Modifier.padding(innerPadding))
-                    ClockScreen(modifier = Modifier.padding(innerPadding))
+//                    ClockScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
 
