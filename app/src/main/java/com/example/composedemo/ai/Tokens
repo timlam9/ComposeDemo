@@ -1,0 +1,34 @@
+Tokens:
+    The smallest mathematical units (like words or parts of words) that an LLM breaks text down into so a computer can process it.
+
+Vectors & Embeddings:
+    Multi-dimensional numbers that map words into a "meaning space," allowing the AI to understand context and relationships between words.
+
+Temperature:
+    A settings parameter that controls how creative, random, or strictly predictable the AI's next-word choices will be.
+
+RLHF (Reinforcement Learning from Human Feedback):
+    A fine-tuning method where humans rank and score AI responses to teach the model what answers are safe and helpful.
+
+Hallucination:
+    A design flaw where an AI confidently presents completely made-up facts or code as absolute truth because it doesn't know its own knowledge boundaries.
+
+Agent:
+    An LLM running autonomously in a continuous loop that can use external tools, check its own work, and retry until a task is completed.
+
+Skills:
+    Markdown files (specifically used in tools like Claude Code) that teach an AI domain-specific knowledge or conventions only when they are actively needed.
+
+MCP (Model Context Protocol):
+    A standardized "API" that allows AI models to directly and uniformly communicate with external tools like Slack, Notion, or databases.
+
+RAG (Retrieval-Augmented Generation):
+    A system architecture that creates a boundary around an AI, forcing it to look up answers only within your specific internal company documents.
+
+Context Window:
+    The maximum amount of total data (including chat history and background prompts) that an AI can process at one single time before running out of "memory."
+
+Resources:
+    1. https://www.youtube.com/watch?v=HhaVpPRInDU
+    2. https://www.youtube.com/watch?v=08tL8ekwwM0
+    3. https://platform.openai.com/tokenizer
